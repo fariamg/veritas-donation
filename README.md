@@ -1,2 +1,0 @@
-# veritas-donation
-# veritas-donation
