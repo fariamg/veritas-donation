@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -12,4 +9,65 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+  BLOCKED
+}
+
+enum DocumentType {
+  CPF
+  CNPJ
+  PASSPORT
+  OTHER
+}
+
+enum VerificationStatus {
+  PENDING
+  SUBMITTED
+  REVIEWING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum WalletProvider {
+  METAMASK
+  WALLET_CONNECT
+  COINBASE_WALLET
+  TRUST_WALLET
+  PHANTOM
+  OTHER
+}
+
+enum BlockchainNetwork {
+  ETHEREUM_MAINNET
+  ETHEREUM_SEPOLIA
+  POLYGON
+  BSC
+  ARBITRUM
+  OPTIMISM
+  SOLANA
+  BASE
+}
+
+enum RoleType {
+  USER         // Usuário comum
+  DONOR        // Mínimo de doações realizadas
+  FUNDRAISER   // Criou e gerencia campanhas
+  MODERATOR    // Moderador de conteúdo
+  ADMIN        // Administrador da plataforma
+}
+
+enum UserReputation {
+  TRUSTED      // Histórico positivo longo
+  GOOD         // Sem problemas
+  NEUTRAL      // Novo ou sem histórico
+  WARNING      // Comportamento suspeito detectado
+  DANGEROUS    // Alto risco, necessário monitoramento
 }
