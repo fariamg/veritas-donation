@@ -56,18 +56,52 @@ enum BlockchainNetwork {
   BASE
 }
 
-enum RoleType {
-  USER         // Usuário comum
-  DONOR        // Mínimo de doações realizadas
-  FUNDRAISER   // Criou e gerencia campanhas
-  MODERATOR    // Moderador de conteúdo
-  ADMIN        // Administrador da plataforma
+enum UserReputation {
+  TRUSTED      // Good standing, reliable
+  GOOD         // Generally positive behavior
+  NEUTRAL      // New or average user
+  WARNING      // Suspect behavior, caution advised
+  DANGEROUS    // High risk, avoid interactions
 }
 
-enum UserReputation {
-  TRUSTED      // Histórico positivo longo
-  GOOD         // Sem problemas
-  NEUTRAL      // Novo ou sem histórico
-  WARNING      // Comportamento suspeito detectado
-  DANGEROUS    // Alto risco, necessário monitoramento
+model User {
+  id                String         @id @default(uuid())
+
+  // Public identity
+  username          String         @unique
+
+  // Status
+  status            UserStatus     @default(PENDING_VERIFICATION)
+  reputation        UserReputation @default(NEUTRAL) @map("reputation_score")
+
+  // Permissions and roles
+  isAdmin          Boolean         @default(false) @map("is_admin")
+  isModerator      Boolean         @default(false) @map("is_moderator")
+
+  // Secondary logging by email and password
+  email             String?        @unique
+  emailVerified     Boolean        @default(false) @map("email_verified")
+  passwordHash      String?        @map("password_hash")
+
+  // Two-factor authentication (2FA)
+  twoFactorEnabled  Boolean        @default(false) @map("two_factor_enabled")
+  twoFactorSecret   String?        @map("two_factor_secret")
+  twoFactorBackupCodes String?     @map("two_factor_backup_codes")
+
+  // Login control
+  loginFailedAttempts Int           @default(0) @map("login_failed_attempts")
+  loginFailedLastAt   DateTime?    @map("login_failed_last_at")
+  accountLockedUntil DateTime?    @map("account_locked_until")
+
+  //Timestamps
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+  lastLoginAt       DateTime?      @map("last_login_at")
+  deletedAt         DateTime?      @map("deleted_at")
+
+  // TODO: Relations
+
+
+  @@map("users")
+ //TODO: indexes
 }
