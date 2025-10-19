@@ -36,6 +36,14 @@ enum VerificationStatus {
   EXPIRED
 }
 
+enum RoleType {
+  USER
+  DONOR
+  FUNDRAISER
+  MODERATOR
+  ADMIN
+}
+
 enum WalletProvider {
   METAMASK
   WALLET_CONNECT
@@ -65,7 +73,7 @@ enum UserReputation {
 }
 
 model User {
-  id                String         @id @default(uuid())
+  userID                String         @id @default(uuid())
 
   // Public identity
   username          String         @unique
@@ -93,15 +101,36 @@ model User {
   loginFailedLastAt   DateTime?    @map("login_failed_last_at")
   accountLockedUntil DateTime?    @map("account_locked_until")
 
-  //Timestamps
+  // Timestamps
   createdAt         DateTime       @default(now()) @map("created_at")
   updatedAt         DateTime       @updatedAt @map("updated_at")
   lastLoginAt       DateTime?      @map("last_login_at")
   deletedAt         DateTime?      @map("deleted_at")
 
   // TODO: Relations
+  // One user can have multiple roles
+  roles                UserRole[]
 
 
   @@map("users")
- //TODO: indexes
+  @@index([status])
+  @@index([userID])
+  @@index([reputation])
+  @@index([createdAt])
+  @@index([email])
+}
+
+model UserRole {
+  id         String   @id @default(uuid())
+  userID     String   @map("user_id")
+  role       RoleType
+  assignedAt DateTime @default(now()) @map("assigned_at")
+  assignedBy String?  @map("assigned_by") // ID of the admin/moderator who assigned the role
+
+  user User @relation(fields: [id], references: [userID], onDelete: Cascade)
+
+  @@unique([userID, role])
+  @@map("user_roles")
+  @@index([userID])
+  @@index([role])
 }
