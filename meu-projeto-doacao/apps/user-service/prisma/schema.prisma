@@ -53,6 +53,7 @@ enum WalletProvider {
   OTHER
 }
 
+// TODO: talvez isso n faça tanto sentido
 enum BlockchainNetwork {
   ETHEREUM_MAINNET
   ETHEREUM_SEPOLIA
@@ -65,72 +66,94 @@ enum BlockchainNetwork {
 }
 
 enum UserReputation {
-  TRUSTED      // Good standing, reliable
-  GOOD         // Generally positive behavior
-  NEUTRAL      // New or average user
-  WARNING      // Suspect behavior, caution advised
-  DANGEROUS    // High risk, avoid interactions
+  TRUSTED // Good standing, reliable
+  GOOD // Generally positive behavior
+  NEUTRAL // New or average user
+  WARNING // Suspect behavior, caution advised
+  DANGEROUS // High risk, avoid interactions
 }
 
+// TODO: onde e como administrar a questão dos documentos
+// Model that represents a user in the system
 model User {
-  userID                String         @id @default(uuid())
-
+  id                   String         @id @default(uuid())
   // Public identity
-  username          String         @unique
-
+  username             String         @unique
   // Status
-  status            UserStatus     @default(PENDING_VERIFICATION)
-  reputation        UserReputation @default(NEUTRAL) @map("reputation_score")
-
+  status               UserStatus     @default(PENDING_VERIFICATION)
+  reputation           UserReputation @default(NEUTRAL) @map("reputation_score")
   // Permissions and roles
-  isAdmin          Boolean         @default(false) @map("is_admin")
-  isModerator      Boolean         @default(false) @map("is_moderator")
-
+  isAdmin              Boolean        @default(false) @map("is_admin")
+  isModerator          Boolean        @default(false) @map("is_moderator")
   // Secondary logging by email and password
-  email             String?        @unique
-  emailVerified     Boolean        @default(false) @map("email_verified")
-  passwordHash      String?        @map("password_hash")
-
+  email                String?        @unique
+  emailVerified        Boolean        @default(false) @map("email_verified")
+  passwordHash         String?        @map("password_hash")
   // Two-factor authentication (2FA)
-  twoFactorEnabled  Boolean        @default(false) @map("two_factor_enabled")
-  twoFactorSecret   String?        @map("two_factor_secret")
-  twoFactorBackupCodes String?     @map("two_factor_backup_codes")
-
+  twoFactorEnabled     Boolean        @default(false) @map("two_factor_enabled")
+  twoFactorSecret      String?        @map("two_factor_secret")
+  twoFactorBackupCodes String?        @map("two_factor_backup_codes")
   // Login control
-  loginFailedAttempts Int           @default(0) @map("login_failed_attempts")
-  loginFailedLastAt   DateTime?    @map("login_failed_last_at")
-  accountLockedUntil DateTime?    @map("account_locked_until")
-
+  loginFailedAttempts  Int            @default(0) @map("login_failed_attempts")
+  loginFailedLastAt    DateTime?      @map("login_failed_last_at")
+  accountLockedUntil   DateTime?      @map("account_locked_until")
   // Timestamps
-  createdAt         DateTime       @default(now()) @map("created_at")
-  updatedAt         DateTime       @updatedAt @map("updated_at")
-  lastLoginAt       DateTime?      @map("last_login_at")
-  deletedAt         DateTime?      @map("deleted_at")
-
+  createdAt            DateTime       @default(now()) @map("created_at")
+  updatedAt            DateTime       @updatedAt @map("updated_at")
+  lastLoginAt          DateTime?      @map("last_login_at")
+  deletedAt            DateTime?      @map("deleted_at")
   // TODO: Relations
-  // One user can have multiple roles
-  roles                UserRole[]
 
+  roles   UserRole[] // One user can have multiple roles
+  profile UserProfile? // TODO: faz sentido isso ser opcional?
 
-  @@map("users")
   @@index([status])
-  @@index([userID])
+  @@index([id])
   @@index([reputation])
   @@index([createdAt])
   @@index([email])
+  @@map("users")
 }
 
+// Model to represent user roles
 model UserRole {
   id         String   @id @default(uuid())
   userID     String   @map("user_id")
   role       RoleType
   assignedAt DateTime @default(now()) @map("assigned_at")
   assignedBy String?  @map("assigned_by") // ID of the admin/moderator who assigned the role
+  user       User     @relation(fields: [id], references: [id], onDelete: Cascade)
 
-  user User @relation(fields: [id], references: [userID], onDelete: Cascade)
-
-  @@unique([userID, role])
-  @@map("user_roles")
+  @@unique([userID, role]) // A user cannot have the same role assigned multiple times
   @@index([userID])
   @@index([role])
+  @@map("user_roles")
+}
+
+//TODO: adicionar tabela country
+
+// Model to represent user profiles (extended information that is publicly visible)
+model UserProfile {
+  id               String        @id @default(uuid())
+  userID           String        @unique @map("user_id")
+  avatarS3Key      String?       @map("avatar_s3_key") // S3 key for the avatar image
+  avatarS3Url      String?       @map("avatar_s3_url") // Pre-signed URL for accessing the avatar image
+  bio              String?       @db.Text()
+  documentType     DocumentType? @map("document_type")
+  documentNumber   String?       @unique @map("document_number") @db.Text()
+  country          String?       @default("BR") //TODO: usar codigo ISO
+  //TODO: ver a boa pratica de armazenar endereço (postal code(?), street, city, state, country)
+  totalDonated     Decimal       @default(0.0) @map("total_donated") @db.Decimal(20, 8)
+  totalReceived    Decimal       @default(0.0) @map("total_received") @db.Decimal(20, 8)
+  campaingsCreated Int           @default(0) @map("campaings_created")
+  donationsCount   Int           @default(0) @map("donations_count")
+  metaData         Json?         @map("meta_data") // Additional metadata as JSON
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userID], references: [id], onDelete: Cascade)
+
+  @@index([country])
+  @@index([documentNumber])
+  @@map("user_profiles")
 }
