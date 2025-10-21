@@ -1,14 +1,14 @@
 version: '3.8'
 services:
-  postgres:
+  postgres-users:
     image: postgres:14
-    container_name: postgres_db
+    container_name: postgres_users
     ports:
-      - "5432:5432"
+      - '5432:5432'
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
-      POSTGRES_DB: campaigns_db # Banco de dados específico para o serviço
+      POSTGRES_DB: users_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -16,8 +16,8 @@ services:
     image: rabbitmq:3.9-management
     container_name: rabbitmq
     ports:
-      - "5672:5672"  # Porta da aplicação
-      - "15672:15672" # Interface de gerenciamento web
+      - '5672:5672' # Porta da aplicação
+      - '15672:15672' # Interface de gerenciamento web
     environment:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: admin
