@@ -77,27 +77,20 @@ enum UserReputation {
 // Model that represents a user in the system
 model User {
   id                   String         @id @default(uuid())
-  // Public identity
   username             String         @unique
-  // Status
   status               UserStatus     @default(PENDING_VERIFICATION)
   reputation           UserReputation @default(NEUTRAL) @map("reputation_score")
-  // Permissions and roles
   isAdmin              Boolean        @default(false) @map("is_admin")
   isModerator          Boolean        @default(false) @map("is_moderator")
-  // Secondary logging by email and password
   email                String?        @unique
   emailVerified        Boolean        @default(false) @map("email_verified")
   passwordHash         String?        @map("password_hash")
-  // Two-factor authentication (2FA)
   twoFactorEnabled     Boolean        @default(false) @map("two_factor_enabled")
   twoFactorSecret      String?        @map("two_factor_secret")
   twoFactorBackupCodes String?        @map("two_factor_backup_codes")
-  // Login control
   loginFailedAttempts  Int            @default(0) @map("login_failed_attempts")
   loginFailedLastAt    DateTime?      @map("login_failed_last_at")
   accountLockedUntil   DateTime?      @map("account_locked_until")
-  // Timestamps
   createdAt            DateTime       @default(now()) @map("created_at")
   updatedAt            DateTime       @updatedAt @map("updated_at")
   lastLoginAt          DateTime?      @map("last_login_at")
@@ -105,7 +98,8 @@ model User {
   // TODO: Relations
 
   roles   UserRole[] // One user can have multiple roles
-  profile UserProfile? // TODO: faz sentido isso ser opcional?
+  profile UserProfile?
+  wallets UserWallet[] // One user can have multiple wallets
 
   @@index([status])
   @@index([id])
@@ -159,5 +153,22 @@ model UserProfile {
   user    User     @relation(fields: [userID], references: [id], onDelete: Cascade)
 
   @@index([documentNumber])
+  @@index([countryCode])
   @@map("user_profiles")
+}
+
+model UserWallet {
+  id                String            @id @default(uuid())
+  userID            String            @map("user_id")
+  walletAddress     String            @map("wallet_address")
+  walletProvider    WalletProvider    @map("wallet_provider")
+  blockchainNetwork BlockchainNetwork @map("blockchain_network")
+  addedAt           DateTime          @default(now()) @map("added_at")
+
+  user User @relation(fields: [userID], references: [id], onDelete: Cascade)
+
+  @@unique([userID, walletAddress, blockchainNetwork])
+  @@index([userID])
+  @@index([walletAddress])
+  @@map("user_wallets")
 }
