@@ -130,7 +130,12 @@ model UserRole {
   @@map("user_roles")
 }
 
-//TODO: adicionar tabela country
+model Country {
+  code String @id @map("code") // ISO country code
+  name String @map("name") // Full country name
+
+  userProfiles UserProfile[] // Relation to UserProfile
+}
 
 // Model to represent user profiles (extended information that is publicly visible)
 model UserProfile {
@@ -140,9 +145,8 @@ model UserProfile {
   avatarS3Url      String?       @map("avatar_s3_url") // Pre-signed URL for accessing the avatar image
   bio              String?       @db.Text()
   documentType     DocumentType? @map("document_type")
+  countryCode      String?       @map("country_code")
   documentNumber   String?       @unique @map("document_number") @db.Text()
-  country          String?       @default("BR") //TODO: usar codigo ISO
-  //TODO: ver a boa pratica de armazenar endereço (postal code(?), street, city, state, country)
   totalDonated     Decimal       @default(0.0) @map("total_donated") @db.Decimal(20, 8)
   totalReceived    Decimal       @default(0.0) @map("total_received") @db.Decimal(20, 8)
   campaingsCreated Int           @default(0) @map("campaings_created")
@@ -151,9 +155,9 @@ model UserProfile {
   createdAt        DateTime      @default(now()) @map("created_at")
   updatedAt        DateTime      @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userID], references: [id], onDelete: Cascade)
+  country Country? @relation(fields: [countryCode], references: [code])
+  user    User     @relation(fields: [userID], references: [id], onDelete: Cascade)
 
-  @@index([country])
   @@index([documentNumber])
   @@map("user_profiles")
 }
