@@ -100,6 +100,7 @@ model User {
   roles   UserRole[] // One user can have multiple roles
   profile UserProfile?
   wallets UserWallet[] // One user can have multiple wallets
+  audits AuditLog[]  // One user can have multiple audit logs
 
   @@index([status])
   @@index([id])
@@ -124,6 +125,7 @@ model UserRole {
   @@map("user_roles")
 }
 
+// Model to represent countries
 model Country {
   code String @id @map("code") // ISO country code
   name String @map("name") // Full country name
@@ -157,6 +159,7 @@ model UserProfile {
   @@map("user_profiles")
 }
 
+// Model to represent user wallets
 model UserWallet {
   id                String            @id @default(uuid())
   userID            String            @map("user_id")
@@ -167,8 +170,30 @@ model UserWallet {
 
   user User @relation(fields: [userID], references: [id], onDelete: Cascade)
 
-  @@unique([userID, walletAddress, blockchainNetwork])
+  @@unique([userID, walletAddress, blockchainNetwork]) // A user cannot register the same wallet address on the same blockchain multiple times
   @@index([userID])
   @@index([walletAddress])
   @@map("user_wallets")
+}
+
+// TODO: User verification table
+
+// TODO: user session table
+
+model AuditLog {
+  id        String    @id @default(uuid())
+  userID    String?   @map("user_id")
+  action    String
+  entity    String
+  description String   @db.Text()
+  metadata Json?
+  ipAddress String?   @map("ip_address")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userID], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+  @@index([action])
+  @@index([entity])
+  @@index([createdAt])
 }
