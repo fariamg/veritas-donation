@@ -132,6 +132,7 @@ model Country {
   name String @map("name") // Full country name
 
   userProfiles UserProfile[] // Relation to UserProfile
+  @@map("countries")
 }
 
 // Model to represent user profiles (extended information that is publicly visible)
