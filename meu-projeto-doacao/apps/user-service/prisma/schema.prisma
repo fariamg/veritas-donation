@@ -95,7 +95,6 @@ model User {
   updatedAt            DateTime       @updatedAt @map("updated_at")
   lastLoginAt          DateTime?      @map("last_login_at")
   deletedAt            DateTime?      @map("deleted_at")
-  // TODO: Relations
 
   roles    UserRole[] // One user can have multiple roles
   profile  UserProfile?
@@ -178,7 +177,7 @@ model UserWallet {
   @@map("user_wallets")
 }
 
-// TODO: User verification table
+// TODO: User verificatee table
 
 model UserSession {
   id             String    @id @default(uuid())
