@@ -4,7 +4,7 @@ const { join } = require('path');
 module.exports = {
   output: {
     path: join(__dirname, '../dist/user-service'),
-    ...(process.env.NODE_ENV !== 'production' && {
+    ...(process.env.NODE_ENV !== 'production' && { // apenas em desenvolvimento para ter spurcemaps detalhados
       devtoolModuleFilenameTemplate: '[absolute-resource-path]',
     }),
   },
@@ -14,7 +14,7 @@ module.exports = {
       compiler: 'tsc',
       main: './src/main.ts',
       tsConfig: './tsconfig.app.json',
-      assets: ['./src/assets'],
+      assets: [], // Sem assets necessários
       optimization: false,
       outputHashing: 'none',
       generatePackageJson: true,
