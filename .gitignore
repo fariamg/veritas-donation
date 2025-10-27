@@ -1,0 +1,68 @@
+# Veritas Donation Platform - Git Ignore
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Nx
+.nx/cache/
+.nx/workspace-data/
+
+# Testing
+coverage/
+*.lcov
+.jest-cache/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Private documentation (keep out of repo)
+IMPLEMENTATION_GUIDE.md
+*_PRIVATE.md
+NOTES.md
+TODO_PERSONAL.md
+
+# Blockchain
+contracts/cache/
+contracts/artifacts/
+contracts/typechain-types/
+
+# ZK Circuits
+zk-circuits/target/
+zk-circuits/keys/*.pk
+zk-circuits/keys/*.vk
+
+# Database
+*.db
+*.sqlite
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
