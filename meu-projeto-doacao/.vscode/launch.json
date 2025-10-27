@@ -4,7 +4,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug api-gateway with Nx",
+      "name": "Debug API Gateway",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["nx", "serve", "api-gateway"],
       "env": {
@@ -15,16 +15,16 @@
       "skipFiles": ["<node_internals>/**"],
       "sourceMaps": true,
       "outFiles": [
-        "${workspaceFolder}/api-gateway/dist/**/*.(m|c|)js",
+        "${workspaceFolder}/dist/apps/api-gateway/**/*.js",
         "!**/node_modules/**"
       ]
     },
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug notifications-service with Nx",
+      "name": "Debug User Service",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["nx", "serve", "notifications-service"],
+      "runtimeArgs": ["nx", "serve", "user-service"],
       "env": {
         "NODE_OPTIONS": "--inspect=9230"
       },
@@ -33,16 +33,16 @@
       "skipFiles": ["<node_internals>/**"],
       "sourceMaps": true,
       "outFiles": [
-        "${workspaceFolder}/notifications-service/dist/**/*.(m|c|)js",
+        "${workspaceFolder}/dist/apps/user-service/**/*.js",
         "!**/node_modules/**"
       ]
     },
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug user-service with Nx",
+      "name": "Debug Notifications Service",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["nx", "serve", "user-service"],
+      "runtimeArgs": ["nx", "serve", "notifications-service"],
       "env": {
         "NODE_OPTIONS": "--inspect=9231"
       },
@@ -51,9 +51,19 @@
       "skipFiles": ["<node_internals>/**"],
       "sourceMaps": true,
       "outFiles": [
-        "${workspaceFolder}/user-service/dist/**/*.(m|c|)js",
+        "${workspaceFolder}/dist/apps/notifications-service/**/*.js",
         "!**/node_modules/**"
       ]
     }
-  ]
+  ],
+  // "compounds": [ // TODO: descomentar para poder debugar todos os serviços juntos
+  //
+  //     "name": "Debug All Services",
+  //     "configurations": [
+  //       "Debug API Gateway",
+  //       "Debug User Service",
+  //       "Debug Notifications Service"
+  //     ]
+  //   }
+  // ]
 }
