@@ -55,10 +55,13 @@ temp/
 # ===================================
 # 🔧 NX MONOREPO SPECIFIC
 # ===================================
-# Nx Cloud
-.nx/cache/
-.nx/workspace-data/
-.nx/installation/
+# Nx Cloud & Cache (IMPORTANT!)
+.nx/
+*/.nx/
+meu-projeto-doacao/.nx/
+**/.nx/cache/
+**/.nx/workspace-data/
+**/.nx/installation/
 
 # Nx generated files
 **/generated/
@@ -67,6 +70,7 @@ temp/
 
 # Nx migration backups
 .nx-migration-backup/
+**/.nx-migration-backup/
 
 # Cursor/GitHub Copilot Nx rules
 .cursor/rules/nx-rules.mdc
