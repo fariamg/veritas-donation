@@ -43,3 +43,14 @@ Thumbs.db
 .nx/workspace-data
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+
+# Logs
+*.log
+error.log
+
+# Prisma
+**/prisma/migrations/migration_lock.toml
+
+# Build artifacts
+**/dist/
+**/generated/
