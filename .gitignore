@@ -1,68 +1,576 @@
-# Veritas Donation Platform - Git Ignore
+# ============================================
+# Veritas Donation Platform - Root .gitignore
+# ============================================
+# Centralized ignore rules for entire monorepo
+# Stack: Nx, NestJS, Prisma, Hardhat, Rust/ZK, Next.js
 
-# Dependencies
+# ===================================
+# 📦 NODE DEPENDENCIES
+# ===================================
 node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Package manager logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Build outputs
+# Lock files (keep only one type)
+# Uncomment the ones you DON'T use:
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# ===================================
+# 🏗️ BUILD OUTPUTS & ARTIFACTS
+# ===================================
+# Compiled output
 dist/
+dist-*
 build/
-.next/
 out/
+out-tsc/
+.output/
+.nuxt/
+.cache/
 
-# Nx
-.nx/cache/
-.nx/workspace-data/
+# Nx specific
+.nx/cache
+.nx/workspace-data
+.nx/installation
 
-# Testing
-coverage/
-*.lcov
-.jest-cache/
+# Build info
+*.tsbuildinfo
+*.tgz
 
-# Environment variables
-.env
-.env.local
-.env.*.local
-*.env
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Private documentation (keep out of repo)
-IMPLEMENTATION_GUIDE.md
-*_PRIVATE.md
-NOTES.md
-TODO_PERSONAL.md
-
-# Blockchain
-contracts/cache/
-contracts/artifacts/
-contracts/typechain-types/
-
-# ZK Circuits
-zk-circuits/target/
-zk-circuits/keys/*.pk
-zk-circuits/keys/*.vk
-
-# Database
-*.db
-*.sqlite
-
-# Logs
-logs/
-*.log
-
-# Temporary files
+# Temporary directories
 tmp/
 temp/
-*.tmp
+.tmp/
+
+# ===================================
+# 🔧 NX MONOREPO SPECIFIC
+# ===================================
+# Nx Cloud
+.nx/cache/
+.nx/workspace-data/
+.nx/installation/
+
+# Nx generated files
+**/generated/
+**/dist/
+**/out-tsc/
+
+# Nx migration backups
+.nx-migration-backup/
+
+# Cursor/GitHub Copilot Nx rules
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
+
+# ===================================
+# 🧪 TESTING & COVERAGE
+# ===================================
+# Test coverage
+coverage/
+*.lcov
+.nyc_output/
+*.cover
+.coverage
+.coverage.*
+
+# Jest
+.jest-cache/
+jest_*.json
+
+# Playwright
+playwright-report/
+test-results/
+
+# Testing misc
+/libpeerconnection.log
+testem.log
+/typings
+
+# E2E artifacts
+e2e/*.png
+e2e/*.jpg
+e2e/screenshots/
+e2e/videos/
+
+# ===================================
+# 🔑 SECRETS & ENVIRONMENT
+# ===================================
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env.*.local
+*.env
+!.env.example
+!**/.env.example
+!.env.template
+
+# Private keys (CRITICAL - NEVER COMMIT!)
+*.key
+*.pem
+*.p12
+*.pfx
+*.keystore
+wallet.json
+keystore/
+.secret
+secrets/
+
+# SSH keys
+id_rsa
+id_dsa
+*.pub
+
+# ===================================
+# 💻 IDE & EDITORS
+# ===================================
+# VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+*.code-workspace
+
+# JetBrains (WebStorm, IntelliJ IDEA, etc)
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+.idea_modules/
+atlassian-ide-plugin.xml
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+
+# Eclipse
+.project
+.classpath
+.settings/
+.loadpath
+.recommenders
+.c9/
+*.launch
+
+# NetBeans
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+*.swp
+*.swo
+*.swn
+*~
+.vim/
+
+# Emacs
+*~
+\#*\#
+.\#*
+.projectile
+
+# ===================================
+# 🖥️ OPERATING SYSTEM
+# ===================================
+# macOS
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+.directory
+.Trash-*
+.nfs*
+
+# ===================================
+# 📝 PRIVATE DOCUMENTATION
+# ===================================
+IMPLEMENTATION_GUIDE.md
+*_PRIVATE.md
+*_INTERNAL.md
+NOTES.md
+TODO_PERSONAL.md
+.notes/
+/docs/private/
+/docs/internal/
+*.draft.md
+
+# ===================================
+# ⛓️ BLOCKCHAIN & SMART CONTRACTS
+# ===================================
+# Hardhat
+meu-projeto-doacao/contracts/cache/
+meu-projeto-doacao/contracts/artifacts/
+meu-projeto-doacao/contracts/typechain-types/
+meu-projeto-doacao/contracts/coverage/
+meu-projeto-doacao/contracts/coverage.json
+
+# Foundry
+meu-projeto-doacao/contracts/out/
+meu-projeto-doacao/contracts/cache_hardhat/
+meu-projeto-doacao/contracts/lib/
+
+# Truffle
+meu-projeto-doacao/contracts/build/
+
+# Blockchain misc
+*.abi
+*.bin
+flatten.sol
+combined.json
+
+# Gas reports
+gas-report.txt
+gasReporterOutput.json
+
+# Deployment records (be careful - might want to track)
+deployments/localhost/
+deployments/hardhat/
+
+# ===================================
+# 🔐 ZERO-KNOWLEDGE PROOFS (ZK)
+# ===================================
+# Rust build artifacts
+meu-projeto-doacao/zk-circuits/target/
+meu-projeto-doacao/zk-circuits/debug/
+meu-projeto-doacao/zk-circuits/release/
+meu-projeto-doacao/zk-circuits/**/*.rs.bk
+meu-projeto-doacao/zk-circuits/Cargo.lock
+
+# ZK Keys & Params (NEVER COMMIT PROVING KEYS!)
+meu-projeto-doacao/zk-circuits/keys/*.pk
+meu-projeto-doacao/zk-circuits/keys/*.vk
+meu-projeto-doacao/zk-circuits/keys/*.params
+*.proving.key
+*.verification.key
+
+# ZK Circuit artifacts
+*.zkey
+*.ptau
+*.r1cs
+*.wasm
+*.sym
+*.wtns
+*.circom.json
+
+# Snarkjs specific
+pot*.ptau
+verification_key.json
+proof.json
+public.json
+
+# ===================================
+# 🗄️ DATABASES & ORM
+# ===================================
+# SQLite
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# PostgreSQL dumps
+*.sql
+*.dump
+
+# Prisma
+**/prisma/migrations/migration_lock.toml
+**/prisma/*.db
+**/prisma/dev.db
+.prisma/
+
+# TypeORM
+ormconfig.json
+
+# Sequelize
+.sequelizerc.js
+
+# Database backups
+*.backup
+backups/
+
+# ===================================
+# 📊 LOGS & DEBUGGING
+# ===================================
+# Application logs
+logs/
+*.log
+combined.log
+error.log
+exceptions.log
+rejections.log
+
+# Package manager logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime logs
+pid
+*.pid
+*.seed
+*.pid.lock
+
+# Directory for instrumented libs
+lib-cov/
+coverage/
+
+# System logs
+/connect.lock
+
+# ===================================
+# 🚀 NESTJS SPECIFIC
+# ===================================
+# NestJS build outputs
+dist/
+dist-server/
+*.js.map
+
+# NestJS CLI
+.nest-cli.json.backup
+
+# Webpack bundles
+*.bundle.js
+stats.json
+
+# ===================================
+# 🗃️ PRISMA SPECIFIC
+# ===================================
+# Generated Prisma Client
+**/generated/prisma/
+**/generated/client/
+node_modules/.prisma/
+
+# Prisma Studio
+.prisma-studio/
+
+# Migration lock (usually ignored)
+**/prisma/migrations/migration_lock.toml
+
+# Keep migrations but ignore specific files
+# **/prisma/migrations/**/migration.sql  # Uncomment to ignore migration SQL
+
+# ===================================
+# 🐳 DOCKER & CONTAINERS
+# ===================================
+# Docker override files
+docker-compose.override.yml
+docker-compose.*.override.yml
+
+# Docker volumes
+.docker-data/
+volumes/
+
+# Docker build cache
+.dockerignore.bak
+
+# ===================================
+# 🌐 FRONTEND (Next.js / React)
+# ===================================
+# Next.js
+.next/
+out/
+.vercel/
+.vercel.json
+
+# Production build
+build/
+dist-ssr/
+
+# Static files cache
+.cache/
+public/static/
+
+# Service workers
+sw.js
+workbox-*.js
+
+# Sitemap & Robots
+public/sitemap*.xml
+public/robots.txt
+
+# PWA
+**/public/sw.js
+**/public/workbox-*.js
+**/public/worker-*.js
+**/public/fallback-*.js
+
+# ===================================
+# 📦 PACKAGE MANAGERS
+# ===================================
+# Yarn v2+
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# pnpm
+.pnpm-store/
+.pnpm-debug.log
+
+# ===================================
+# 🔒 SECURITY & AUDIT
+# ===================================
+# Security scan results
+snyk-report.html
+security-report.json
+
+# Audit reports
+npm-audit.json
+audit-report.html
+
+# ===================================
+# 🛠️ DEVELOPMENT TOOLS
+# ===================================
+# Storybook
+storybook-static/
+.storybook/
+
+# Nx Console
+.nx-console/
+
+# ESLint cache
+.eslintcache
+
+# Prettier cache
+.prettiercache
+
+# Stylelint cache
+.stylelintcache
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Turbo
+.turbo/
+
+# ===================================
+# 📡 API & EXTERNAL SERVICES
+# ===================================
+# API documentation
+api-docs/
+swagger-ui/
+
+# GraphQL
+schema.graphql.generated
+graphql.schema.json
+
+# ===================================
+# 🎨 ASSETS & MEDIA (Large Files)
+# ===================================
+# Large media files (if not using Git LFS)
+# Uncomment if you don't want to track large files:
+# *.mp4
+# *.mov
+# *.avi
+# *.flv
+# *.zip
+# *.tar
+# *.tar.gz
+# *.rar
+# *.7z
+
+# ===================================
+# 📱 MOBILE (Future)
+# ===================================
+# React Native
+.expo/
+.expo-shared/
+
+# ===================================
+# ⚙️ MISCELLANEOUS
+# ===================================
+# Sass
+.sass-cache/
+*.css.map
+
+# Lock files for CI
+.npmrc.local
+.yarnrc.local
+
+# Verdaccio
+.verdaccio/
+
+# Benchmark results
+benchmarks/
+
+# Sentry
+.sentryclirc
+
+# ===================================
+# 🚫 CUSTOM PROJECT IGNORES
+# ===================================
+# Add your custom patterns below this line
+
+# Uploads (if you have upload functionality)
+uploads/
+public/uploads/
+**/uploads/
+
+# Temporary exports
+exports/
+downloads/
+
+# Custom scripts output
+scripts/output/
