@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma.service';
 import { UserEntity } from './entities/user.entity';
 import { CreateUserDto, IUser, UpdateUserDto } from '@shared';
@@ -16,7 +17,7 @@ export class UsersService {
    * Cria um novo usuário
    */
   async create(createUserDto: CreateUserDto): Promise<UserEntity> {
-    const { email, username, status, reputation } = createUserDto;
+    const { email, username, password, status, reputation } = createUserDto;
 
     // Verifica se o email já existe
     if (email) {
@@ -38,11 +39,18 @@ export class UsersService {
       }
     }
 
-    // Cria o usuário
+    // Hash da senha usando bcrypt com salt rounds = 10
+    let passwordHash: string | undefined;
+    if (password) {
+      passwordHash = await bcrypt.hash(password, 10);
+    }
+
+    // Cria o usuário com a senha hasheada
     return this.prisma.user.create({
       data: {
         email,
         username,
+        passwordHash,
         status: status ?? UserStatus.PENDING_VERIFICATION,
         reputation: reputation ?? UserReputation.NEUTRAL,
       },
