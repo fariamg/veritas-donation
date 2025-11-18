@@ -7,7 +7,6 @@ import {
   Param,
   Delete,
   Query,
-  ParseIntPipe,
   Inject,
   UseInterceptors,
 } from '@nestjs/common';
@@ -23,8 +22,10 @@ import { timeout } from 'rxjs/operators';
 
 import {
   USER_MESSAGE_PATTERNS,
-  ICreateUserRequest,
-  IUpdateUserRequest,
+  CreateUserDto,
+  UpdateUserDto,
+  FindAllUsersQueryDto,
+  IUser,
 } from '@shared';
 import { RpcToHttpExceptionInterceptor } from '../interceptors/rpc-to-http-exception.interceptor';
 
@@ -35,8 +36,8 @@ import { RpcToHttpExceptionInterceptor } from '../interceptors/rpc-to-http-excep
  */
 @Controller('users') // Rota base: /api/users
 @UseInterceptors(RpcToHttpExceptionInterceptor)
-// Alica interceptor que converte erros RPC em HTTP automaticamente
-// xemplo: RpcException({status: 404}) → HttpException(404)
+// Aplica interceptor que converte erros RPC em HTTP automaticamente
+// Exemplo: RpcException({status: 404}) → HttpException(404)
 export class UsersController {
   // Injeção do ClientProxy para comunicação com o User Service
   // ClientProxy é um proxy para enviar mensagens via RabbitMQ
@@ -47,12 +48,13 @@ export class UsersController {
   /**
    * POST /api/users
    * Cria um novo usuário
+   * Valida dados com CreateUserDto via ValidationPipe
    */
   @Post()
-  async create(@Body() createUserDto: ICreateUserRequest) {
+  async create(@Body() createUserDto: CreateUserDto): Promise<IUser> {
     return await firstValueFrom(
       // firstValueFrom: Converte Observable RxJS em Promise
-      // Por que? O ClientProxy retorna Observable, mas queremos async/await
+      // O ClientProxy retorna Observable, mas queremos async/await
       this.userServiceClient
         .send(
           // .send(): Envia mensagem e ESPERA resposta (Request-Response pattern)
@@ -62,7 +64,7 @@ export class UsersController {
           createUserDto
         )
         .pipe(timeout(5000))
-      //  Se não receber resposta em 5 segundos, lança TimeoutError
+      // Se não receber resposta em 5 segundos, lança TimeoutError
       // Protege contra microserviços travados
     );
   }
@@ -70,19 +72,13 @@ export class UsersController {
   /**
    * GET /api/users
    * Lista todos os usuários com paginação
+   * Valida query params com FindAllUsersQueryDto
    */
   @Get()
-  async findAll(
-    @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
-    // @Query('page'): Extrai query param ?page=X
-    // ParseIntPipe: Converte string → number e valida
-    // { optional: true }: Não é obrigatório
-    // = 1: Valor padrão se não enviado
-    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10
-  ) {
+  async findAll(@Query() query: FindAllUsersQueryDto): Promise<IUser[]> {
     return await firstValueFrom(
       this.userServiceClient
-        .send(USER_MESSAGE_PATTERNS.FIND_ALL_USERS, { page, limit })
+        .send(USER_MESSAGE_PATTERNS.FIND_ALL_USERS, query)
         .pipe(timeout(5000))
     );
   }
@@ -92,7 +88,7 @@ export class UsersController {
    * Retorna um usuário específico pelo ID
    */
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string): Promise<IUser> {
     return await firstValueFrom(
       this.userServiceClient
         .send(USER_MESSAGE_PATTERNS.FIND_USER_BY_ID, { id })
@@ -105,7 +101,7 @@ export class UsersController {
    * Retorna um usuário específico pelo email
    */
   @Get('email/:email')
-  async findByEmail(@Param('email') email: string) {
+  async findByEmail(@Param('email') email: string): Promise<IUser> {
     return await firstValueFrom(
       this.userServiceClient
         .send(USER_MESSAGE_PATTERNS.FIND_USER_BY_EMAIL, { email })
@@ -118,7 +114,7 @@ export class UsersController {
    * Retorna um usuário específico pelo username
    */
   @Get('username/:username')
-  async findByUsername(@Param('username') username: string) {
+  async findByUsername(@Param('username') username: string): Promise<IUser> {
     return await firstValueFrom(
       this.userServiceClient
         .send(USER_MESSAGE_PATTERNS.FIND_USER_BY_USERNAME, { username })
@@ -129,12 +125,13 @@ export class UsersController {
   /**
    * PATCH /api/users/:id
    * Atualiza um usuário
+   * Valida dados com UpdateUserDto via ValidationPipe
    */
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Body() updateUserDto: IUpdateUserRequest
-  ) {
+    @Body() updateUserDto: UpdateUserDto
+  ): Promise<IUser> {
     return await firstValueFrom(
       this.userServiceClient
         .send(USER_MESSAGE_PATTERNS.UPDATE_USER, { id, ...updateUserDto })
@@ -147,7 +144,7 @@ export class UsersController {
    * Remove um usuário (soft delete)
    */
   @Delete(':id')
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string): Promise<IUser> {
     return await firstValueFrom(
       this.userServiceClient
         .send(USER_MESSAGE_PATTERNS.DELETE_USER, { id })
@@ -160,12 +157,11 @@ export class UsersController {
    * Remove permanentemente um usuário
    */
   @Delete(':id/hard')
-  async hardDelete(@Param('id') id: string) {
+  async hardDelete(@Param('id') id: string): Promise<void> {
     await firstValueFrom(
       this.userServiceClient
         .send(USER_MESSAGE_PATTERNS.HARD_DELETE_USER, { id })
         .pipe(timeout(5000))
     );
-    return { message: 'Usuário removido permanentemente' };
   }
 }
