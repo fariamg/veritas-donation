@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { timeout } from 'rxjs/operators';
+import * as bcrypt from 'bcrypt';
 import { USER_MESSAGE_PATTERNS, IUser } from '@shared';
 import { LoginResponseDto } from './dto/login.dto';
 
@@ -20,24 +21,31 @@ export class AuthService {
   /**
    * Valida as credenciais do usuário
    * @param email - Email do usuário
-   * @param password - Senha (em produção, deve ser hasheada)
+   * @param password - Senha em texto plano
    * @returns Usuário sem a senha
    */
   async validateUser(
     email: string,
-    password: string
-  ): Promise<Omit<IUser, 'password'>> { //TODO: acho que n precisa desse omit
+    password: string,
+  ): Promise<Omit<IUser, 'password'>> {
     try {
       // Busca o usuário pelo email no user-service
       const user = await firstValueFrom<IUser>(
         this.userServiceClient
           .send(USER_MESSAGE_PATTERNS.FIND_USER_BY_EMAIL, { email })
-          .pipe(timeout(5000))
+          .pipe(timeout(5000)),
       );
 
-      // TODO: Em produção, comparar hash da senha com bcrypt
-      // Para desenvolvimento, comparação simples (NÃO USE EM PRODUÇÃO!)
-      if (user && user.password === password) {
+      // Valida se usuário existe e tem senha cadastrada
+      if (!user || !user.password) {
+        return null;
+      }
+
+      // Compara a senha fornecida com o hash armazenado usando bcrypt
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+
+      if (isPasswordValid) {
+        // Remove a senha do objeto retornado
         const { password, ...result } = user;
         return result;
       }
