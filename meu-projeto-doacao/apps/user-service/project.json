@@ -1,7 +1,7 @@
 {
   "name": "user-service",
-  "$schema": "../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "user-service/src",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/user-service/src",
   "projectType": "application",
   "tags": [],
   "targets": {
@@ -10,7 +10,7 @@
       "options": {
         "command": "webpack-cli build",
         "args": ["--node-env=production"],
-        "cwd": "user-service"
+        "cwd": "apps/user-service"
       },
       "configurations": {
         "development": {
