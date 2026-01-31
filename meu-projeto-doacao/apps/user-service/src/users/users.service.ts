@@ -34,7 +34,7 @@ export class UsersService {
       isModerator,
     } = createUserDto;
 
-    // REGRA DE NEGÓCIO: Apenas ADMIN e MODERADOR podem ter email/senha
+    // Apenas ADMIN e MODERADOR podem ter email/senha
     // Doadores anônimos usam apenas wallets blockchain
     if ((email || password) && !isAdmin && !isModerator) {
       throw new ConflictException(
