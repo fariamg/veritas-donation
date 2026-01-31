@@ -25,6 +25,11 @@ export const USER_MESSAGE_PATTERNS = {
   LOG_LOGIN_SUCCESS: { cmd: 'log_login_success' },
   LOG_LOGIN_FAILED: { cmd: 'log_login_failed' },
 
+  // Audit Queries
+  GET_AUDIT_LOGS_BY_USER: { cmd: 'get_audit_logs_by_user' },
+  GET_AUDIT_LOGS_BY_ACTION: { cmd: 'get_audit_logs_by_action' },
+  GET_AUDIT_LOGS_BY_DATE_RANGE: { cmd: 'get_audit_logs_by_date_range' },
+
   // User Events
   USER_CREATED: { cmd: 'user_created' },
   USER_UPDATED: { cmd: 'user_updated' },

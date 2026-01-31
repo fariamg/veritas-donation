@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from '../users/users.module';
 import { AuthModule } from '../auth/auth.module';
+import { AuditModule } from '../audit/audit.module';
 import { apiGatewayConfigValidation } from '../config/config.validation';
 
 // Módulo principal do API Gateway
@@ -19,6 +20,7 @@ import { apiGatewayConfigValidation } from '../config/config.validation';
     }),
     AuthModule, // Módulo de autenticação
     UsersModule,
+    AuditModule, // Módulo de auditoria (apenas para admins)
     // CampaignsModule,  // TODO: Adicionar quando criar
     // PaymentsModule,   // TODO: Adicionar quando criar
   ],
