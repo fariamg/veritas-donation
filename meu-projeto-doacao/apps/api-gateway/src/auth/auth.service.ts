@@ -90,6 +90,18 @@ export class AuthService {
         /* Ignora erros ao registrar falha */
       });
 
+      // Registra no log de auditoria via user-service
+      await firstValueFrom(
+        this.userServiceClient
+          .send(USER_MESSAGE_PATTERNS.LOG_LOGIN_FAILED, {
+            email,
+            reason: 'Credenciais inválidas',
+          })
+          .pipe(timeout(5000))
+      ).catch(() => {
+        /* Ignora erros ao registrar auditoria */
+      });
+
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
@@ -102,6 +114,18 @@ export class AuthService {
         .pipe(timeout(5000))
     ).catch(() => {
       /* Ignora erros ao resetar contador */
+    });
+
+    // Registra login bem-sucedido no log de auditoria
+    await firstValueFrom(
+      this.userServiceClient
+        .send(USER_MESSAGE_PATTERNS.LOG_LOGIN_SUCCESS, {
+          userId: user.id,
+          email: user.email,
+        })
+        .pipe(timeout(5000))
+    ).catch(() => {
+      /* Ignora erros ao registrar auditoria */
     });
 
     const payload = {
