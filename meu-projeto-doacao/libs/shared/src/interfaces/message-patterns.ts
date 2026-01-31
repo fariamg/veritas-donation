@@ -10,10 +10,16 @@ export const USER_MESSAGE_PATTERNS = {
   FIND_ALL_USERS: { cmd: 'find_all_users' },
   FIND_USER_BY_ID: { cmd: 'find_user_by_id' },
   FIND_USER_BY_EMAIL: { cmd: 'find_user_by_email' },
+  FIND_USER_BY_EMAIL_WITH_PASSWORD: { cmd: 'find_user_by_email_with_password' },
   FIND_USER_BY_USERNAME: { cmd: 'find_user_by_username' },
   UPDATE_USER: { cmd: 'update_user' },
   DELETE_USER: { cmd: 'delete_user' },
   HARD_DELETE_USER: { cmd: 'hard_delete_user' },
+
+  // Authentication & Security
+  RECORD_FAILED_LOGIN: { cmd: 'record_failed_login' },
+  RESET_FAILED_LOGIN_ATTEMPTS: { cmd: 'reset_failed_login_attempts' },
+  IS_ACCOUNT_LOCKED: { cmd: 'is_account_locked' },
 
   // User Events
   USER_CREATED: { cmd: 'user_created' },
