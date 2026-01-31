@@ -62,6 +62,18 @@ export class UsersController {
   }
 
   /**
+   * Pattern: find_user_by_email_with_password
+   * Retorna um usuário específico pelo email COM passwordHash
+   * APENAS para autenticação interna - NUNCA expor ao cliente!
+   */
+  @MessagePattern(USER_MESSAGE_PATTERNS.FIND_USER_BY_EMAIL_WITH_PASSWORD)
+  async findByEmailWithPassword(
+    @Payload() data: { email: string }
+  ): Promise<IUser & { passwordHash?: string }> {
+    return this.usersService.findByEmailWithPassword(data.email);
+  }
+
+  /**
    * Pattern: find_user_by_username
    * Retorna um usuário específico pelo username
    */
@@ -99,5 +111,34 @@ export class UsersController {
   @MessagePattern(USER_MESSAGE_PATTERNS.HARD_DELETE_USER)
   async hardDelete(@Payload() data: { id: string }): Promise<void> {
     return this.usersService.hardDelete(data.id);
+  }
+
+  /**
+   * Pattern: record_failed_login
+   * Registra tentativa de login falhada
+   */
+  @MessagePattern(USER_MESSAGE_PATTERNS.RECORD_FAILED_LOGIN)
+  async recordFailedLogin(@Payload() data: { email: string }): Promise<void> {
+    return this.usersService.recordFailedLogin(data.email);
+  }
+
+  /**
+   * Pattern: reset_failed_login_attempts
+   * Reseta contador de tentativas após login bem-sucedido
+   */
+  @MessagePattern(USER_MESSAGE_PATTERNS.RESET_FAILED_LOGIN_ATTEMPTS)
+  async resetFailedLoginAttempts(
+    @Payload() data: { userId: string }
+  ): Promise<void> {
+    return this.usersService.resetFailedLoginAttempts(data.userId);
+  }
+
+  /**
+   * Pattern: is_account_locked
+   * Verifica se a conta está bloqueada
+   */
+  @MessagePattern(USER_MESSAGE_PATTERNS.IS_ACCOUNT_LOCKED)
+  async isAccountLocked(@Payload() data: { email: string }): Promise<boolean> {
+    return this.usersService.isAccountLocked(data.email);
   }
 }
