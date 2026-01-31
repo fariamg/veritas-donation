@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from '../users/users.module';
+import { AuditModule } from '../audit/audit.module';
 import { userServiceConfigValidation } from '../config/config.validation';
 
 /**
@@ -20,6 +21,7 @@ import { userServiceConfigValidation } from '../config/config.validation';
       },
     }),
     UsersModule,
+    AuditModule,
   ],
 })
 export class AppModule {}
