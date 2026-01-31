@@ -21,6 +21,10 @@ export const USER_MESSAGE_PATTERNS = {
   RESET_FAILED_LOGIN_ATTEMPTS: { cmd: 'reset_failed_login_attempts' },
   IS_ACCOUNT_LOCKED: { cmd: 'is_account_locked' },
 
+  // Audit Logging
+  LOG_LOGIN_SUCCESS: { cmd: 'log_login_success' },
+  LOG_LOGIN_FAILED: { cmd: 'log_login_failed' },
+
   // User Events
   USER_CREATED: { cmd: 'user_created' },
   USER_UPDATED: { cmd: 'user_updated' },
