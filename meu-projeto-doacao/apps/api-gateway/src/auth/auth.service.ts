@@ -29,24 +29,26 @@ export class AuthService {
     password: string
   ): Promise<Omit<IUser, 'password'>> {
     try {
-      // Busca o usuário pelo email no user-service
-      const user = await firstValueFrom<IUser>(
+      // Busca o usuário pelo email no user-service COM passwordHash
+      const user = await firstValueFrom<IUser & { passwordHash?: string }>(
         this.userServiceClient
-          .send(USER_MESSAGE_PATTERNS.FIND_USER_BY_EMAIL, { email })
+          .send(USER_MESSAGE_PATTERNS.FIND_USER_BY_EMAIL_WITH_PASSWORD, {
+            email,
+          })
           .pipe(timeout(5000))
       );
 
       // Valida se usuário existe e tem senha cadastrada
-      if (!user || !user.password) {
+      if (!user || !user.passwordHash) {
         return null;
       }
 
       // Compara a senha fornecida com o hash armazenado usando bcrypt
-      const isPasswordValid = await bcrypt.compare(password, user.password);
+      const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
       if (isPasswordValid) {
-        // Remove a senha do objeto retornado
-        const { password, ...result } = user;
+        // Remove campos sensíveis do objeto retornado
+        const { passwordHash, ...result } = user;
         return result;
       }
 
