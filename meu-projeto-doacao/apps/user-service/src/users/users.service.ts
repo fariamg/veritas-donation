@@ -11,13 +11,39 @@ import { UserReputation, UserStatus } from 'apps/user-service/generated/prisma';
 
 @Injectable()
 export class UsersService {
+  // Constante para definir o número de rounds do bcrypt
+  private readonly BCRYPT_SALT_ROUNDS = 10;
+
   constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Cria um novo usuário
    */
   async create(createUserDto: CreateUserDto): Promise<UserEntity> {
-    const { email, username, password, status, reputation } = createUserDto;
+    const {
+      email,
+      username,
+      password,
+      status,
+      reputation,
+      isAdmin,
+      isModerator,
+    } = createUserDto;
+
+    // REGRA DE NEGÓCIO: Apenas ADMIN e MODERADOR podem ter email/senha
+    // Doadores anônimos usam apenas wallets blockchain
+    if ((email || password) && !isAdmin && !isModerator) {
+      throw new ConflictException(
+        'Apenas administradores e moderadores podem ter email/senha. Doadores devem usar carteiras blockchain.'
+      );
+    }
+
+    // Se é ADMIN ou MODERADOR, email e senha são obrigatórios
+    if ((isAdmin || isModerator) && (!email || !password)) {
+      throw new ConflictException(
+        'Administradores e moderadores devem ter email e senha cadastrados.'
+      );
+    }
 
     // Verifica se o email já existe
     if (email) {
@@ -39,10 +65,10 @@ export class UsersService {
       }
     }
 
-    // Hash da senha usando bcrypt com salt rounds = 10
+    // Hash da senha usando bcrypt
     let passwordHash: string | undefined;
     if (password) {
-      passwordHash = await bcrypt.hash(password, 10);
+      passwordHash = await bcrypt.hash(password, this.BCRYPT_SALT_ROUNDS);
     }
 
     // Cria o usuário com a senha hasheada
@@ -51,6 +77,8 @@ export class UsersService {
         email,
         username,
         passwordHash,
+        isAdmin: isAdmin ?? false,
+        isModerator: isModerator ?? false,
         status: status ?? UserStatus.PENDING_VERIFICATION,
         reputation: reputation ?? UserReputation.NEUTRAL,
       },
@@ -97,6 +125,31 @@ export class UsersService {
   }
 
   /**
+   * Retorna um usuário pelo email com o passwordHash
+   * Este método é usado APENAS para autenticação interna
+   * NUNCA expor o passwordHash ao cliente!
+   */
+  async findByEmailWithPassword(
+    email: string
+  ): Promise<(UserEntity & { passwordHash?: string }) | null> {
+    // Usa raw query para incluir o passwordHash (que é omitido pelo middleware)
+    const users = await this.prisma.$queryRaw<
+      Array<UserEntity & { password_hash?: string }>
+    >`SELECT * FROM users WHERE email = ${email} LIMIT 1`;
+
+    if (!users || users.length === 0) {
+      return null;
+    }
+
+    // Mapeia password_hash (snake_case do banco) para passwordHash (camelCase)
+    const user = users[0];
+    return {
+      ...user,
+      passwordHash: user.password_hash,
+    } as UserEntity & { passwordHash?: string };
+  }
+
+  /**
    * Retorna um usuário pelo username
    */
   async findByUsername(username: string): Promise<UserEntity | null> {
@@ -110,7 +163,18 @@ export class UsersService {
    */
   async update(id: string, updateUserDto: UpdateUserDto): Promise<UserEntity> {
     // Verifica se o usuário existe
-    await this.findOne(id);
+    const currentUser = await this.findOne(id);
+
+    // REGRA DE NEGÓCIO: Apenas ADMIN e MODERADOR podem ter email/senha
+    if (
+      (updateUserDto.email || updateUserDto.password) &&
+      !currentUser.isAdmin &&
+      !currentUser.isModerator
+    ) {
+      throw new ConflictException(
+        'Apenas administradores e moderadores podem ter email/senha.'
+      );
+    }
 
     // Verifica unicidade de email
     if (updateUserDto.email) {
@@ -138,10 +202,23 @@ export class UsersService {
       }
     }
 
-    // Remove propriedades undefined para não sobrescrever com null
-    const dataToUpdate = Object.fromEntries(
-      Object.entries(updateUserDto).filter(([_, v]) => v !== undefined)
-    );
+    // Prepara os dados para atualização
+    const dataToUpdate: any = {};
+
+    // Se uma nova senha foi fornecida, faz o hash antes de salvar
+    if (updateUserDto.password) {
+      dataToUpdate.passwordHash = await bcrypt.hash(
+        updateUserDto.password,
+        this.BCRYPT_SALT_ROUNDS
+      );
+    }
+
+    // Adiciona os outros campos (exceto password, já tratado acima)
+    Object.entries(updateUserDto).forEach(([key, value]) => {
+      if (key !== 'password' && value !== undefined) {
+        dataToUpdate[key] = value;
+      }
+    });
 
     return this.prisma.user.update({
       where: { id },
@@ -175,5 +252,90 @@ export class UsersService {
     await this.prisma.user.delete({
       where: { id },
     });
+  }
+
+  /**
+   * Registra tentativa de login falhada
+   * Bloqueia conta temporariamente após 5 tentativas
+   */
+  async recordFailedLogin(email: string): Promise<void> {
+    const user = await this.findByEmail(email);
+    if (!user) return;
+
+    const now = new Date();
+    const attempts = user.loginFailedAttempts + 1;
+    const MAX_ATTEMPTS = 5;
+    const LOCK_DURATION_MINUTES = 30;
+
+    // Se já está bloqueado, não faz nada
+    if (user.accountLockedUntil && user.accountLockedUntil > now) {
+      return;
+    }
+
+    // Se atingiu o máximo de tentativas, bloqueia a conta
+    if (attempts >= MAX_ATTEMPTS) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          loginFailedAttempts: attempts,
+          loginFailedLastAt: now,
+          accountLockedUntil: new Date(
+            now.getTime() + LOCK_DURATION_MINUTES * 60 * 1000 // Retorna em ms
+          ),
+          status: UserStatus.SUSPENDED,
+        },
+      });
+    } else {
+      // Incrementa contador de tentativas falhadas
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          loginFailedAttempts: attempts,
+          loginFailedLastAt: now,
+        },
+      });
+    }
+  }
+
+  /**
+   * Reseta contador de tentativas de login após login bem-sucedido
+   */
+  async resetFailedLoginAttempts(userId: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        loginFailedAttempts: 0,
+        loginFailedLastAt: null,
+        lastLoginAt: new Date(),
+      },
+    });
+  }
+
+  /**
+   * Verifica se a conta está bloqueada
+   */
+  async isAccountLocked(email: string): Promise<boolean> {
+    const user = await this.findByEmail(email);
+    if (!user) return false;
+
+    const now = new Date();
+    if (user.accountLockedUntil && user.accountLockedUntil > now) {
+      return true;
+    }
+
+    // Se o período de bloqueio expirou, desbloqueia automaticamente
+    if (user.accountLockedUntil && user.accountLockedUntil <= now) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          accountLockedUntil: null,
+          loginFailedAttempts: 0,
+          status: UserStatus.ACTIVE,
+        },
+      });
+      return false;
+    }
+
+    return false;
   }
 }
