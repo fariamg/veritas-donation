@@ -65,16 +65,51 @@ export class AuthService {
    * @returns Token de acesso e informações do usuário
    */
   async login(email: string, password: string): Promise<LoginResponseDto> {
+    // Verifica se a conta está bloqueada
+    const isLocked = await firstValueFrom<boolean>(
+      this.userServiceClient
+        .send(USER_MESSAGE_PATTERNS.IS_ACCOUNT_LOCKED, { email })
+        .pipe(timeout(5000))
+    );
+
+    if (isLocked) {
+      throw new UnauthorizedException(
+        'Conta temporariamente bloqueada devido a múltiplas tentativas de login falhadas. Tente novamente em 30 minutos.'
+      );
+    }
+
     const user = await this.validateUser(email, password);
 
     if (!user) {
+      // Registra tentativa de login falhada
+      await firstValueFrom(
+        this.userServiceClient
+          .send(USER_MESSAGE_PATTERNS.RECORD_FAILED_LOGIN, { email })
+          .pipe(timeout(5000))
+      ).catch(() => {
+        /* Ignora erros ao registrar falha */
+      });
+
       throw new UnauthorizedException('Credenciais inválidas');
     }
+
+    // Reseta contador de tentativas falhadas após login bem-sucedido
+    await firstValueFrom(
+      this.userServiceClient
+        .send(USER_MESSAGE_PATTERNS.RESET_FAILED_LOGIN_ATTEMPTS, {
+          userId: user.id,
+        })
+        .pipe(timeout(5000))
+    ).catch(() => {
+      /* Ignora erros ao resetar contador */
+    });
 
     const payload = {
       sub: user.id,
       email: user.email,
       username: user.username,
+      isAdmin: user.isAdmin,
+      isModerator: user.isModerator,
       roles: user.roles || [],
     };
 
