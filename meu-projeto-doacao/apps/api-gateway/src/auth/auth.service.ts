@@ -26,14 +26,14 @@ export class AuthService {
    */
   async validateUser(
     email: string,
-    password: string,
+    password: string
   ): Promise<Omit<IUser, 'password'>> {
     try {
       // Busca o usuário pelo email no user-service
       const user = await firstValueFrom<IUser>(
         this.userServiceClient
           .send(USER_MESSAGE_PATTERNS.FIND_USER_BY_EMAIL, { email })
-          .pipe(timeout(5000)),
+          .pipe(timeout(5000))
       );
 
       // Valida se usuário existe e tem senha cadastrada

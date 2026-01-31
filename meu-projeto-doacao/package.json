@@ -2,7 +2,21 @@
   "name": "@meu-projeto-doacao/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "prisma:generate": "nx run user-service:prisma-generate",
+    "prisma:migrate": "nx run user-service:prisma-migrate",
+    "prisma:studio": "nx run user-service:prisma-studio",
+    "prisma:reset": "nx run user-service:prisma-reset",
+    "dev:gateway": "nx serve api-gateway",
+    "dev:users": "nx serve user-service",
+    "dev:all": "nx run-many --target=serve --projects=api-gateway,user-service --parallel",
+    "build:all": "nx run-many --target=build --projects=api-gateway,user-service",
+    "test:all": "nx run-many --target=test --all",
+    "lint:all": "nx run-many --target=lint --all"
+  },
   "private": true,
   "devDependencies": {
     "@eslint/js": "^9.8.0",
