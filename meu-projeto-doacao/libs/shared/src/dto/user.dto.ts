@@ -49,6 +49,12 @@ export class CreateUserDto {
     message: 'Reputation inválida',
   })
   reputation?: 'TRUSTED' | 'GOOD' | 'NEUTRAL' | 'WARNING' | 'DANGEROUS';
+
+  @IsOptional()
+  isAdmin?: boolean;
+
+  @IsOptional()
+  isModerator?: boolean;
 }
 
 /**
@@ -64,6 +70,11 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEmail({}, { message: 'Email inválido' })
   email?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Password deve ser uma string' })
+  @MinLength(6, { message: 'Password deve ter no mínimo 6 caracteres' })
+  password?: string;
 
   @IsOptional()
   @IsEnum(
