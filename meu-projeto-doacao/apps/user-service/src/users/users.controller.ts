@@ -10,6 +10,7 @@ import {
   FindAllUsersQueryDto,
   IUser,
 } from '@shared';
+import { AuditLogService } from '../audit/audit-log.service';
 
 /**
  * Users Controller - Microserviço
@@ -18,7 +19,10 @@ import {
  */
 @Controller() // SEM ROTA - Não é HTTP controller!
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {} // Injeta o service que tem a lógica de negócio + Prisma
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly auditLogService: AuditLogService
+  ) {} // Injeta o service que tem a lógica de negócio + Prisma
 
   /**
    * Pattern: create_user
@@ -140,5 +144,35 @@ export class UsersController {
   @MessagePattern(USER_MESSAGE_PATTERNS.IS_ACCOUNT_LOCKED)
   async isAccountLocked(@Payload() data: { email: string }): Promise<boolean> {
     return this.usersService.isAccountLocked(data.email);
+  }
+
+  /**
+   * Pattern: log_login_success
+   * Registra login bem-sucedido no log de auditoria
+   */
+  @MessagePattern(USER_MESSAGE_PATTERNS.LOG_LOGIN_SUCCESS)
+  async logLoginSuccess(
+    @Payload() data: { userId: string; email: string; ipAddress?: string }
+  ): Promise<void> {
+    return this.auditLogService.logLoginSuccess(
+      data.userId,
+      data.email,
+      data.ipAddress
+    );
+  }
+
+  /**
+   * Pattern: log_login_failed
+   * Registra tentativa de login falhada no log de auditoria
+   */
+  @MessagePattern(USER_MESSAGE_PATTERNS.LOG_LOGIN_FAILED)
+  async logLoginFailed(
+    @Payload() data: { email: string; reason: string; ipAddress?: string }
+  ): Promise<void> {
+    return this.auditLogService.logLoginFailed(
+      data.email,
+      data.reason,
+      data.ipAddress
+    );
   }
 }
