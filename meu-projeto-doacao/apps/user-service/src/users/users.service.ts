@@ -8,13 +8,17 @@ import { PrismaService } from '../prisma.service';
 import { UserEntity } from './entities/user.entity';
 import { CreateUserDto, IUser, UpdateUserDto } from '@shared';
 import { UserReputation, UserStatus } from 'apps/user-service/generated/prisma';
+import { AuditLogService } from '../audit/audit-log.service';
 
 @Injectable()
 export class UsersService {
   // Constante para definir o número de rounds do bcrypt
   private readonly BCRYPT_SALT_ROUNDS = 10;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLogService: AuditLogService
+  ) {}
 
   /**
    * Cria um novo usuário
@@ -72,7 +76,7 @@ export class UsersService {
     }
 
     // Cria o usuário com a senha hasheada
-    return this.prisma.user.create({
+    const newUser = await this.prisma.user.create({
       data: {
         email,
         username,
@@ -83,6 +87,21 @@ export class UsersService {
         reputation: reputation ?? UserReputation.NEUTRAL,
       },
     });
+
+    // Registra criação no log de auditoria
+    await this.auditLogService.logUserCreated(
+      newUser.id,
+      undefined, // createdBy (pode ser passado como parâmetro se necessário)
+      {
+        username: newUser.username,
+        email: newUser.email,
+        isAdmin: newUser.isAdmin,
+        isModerator: newUser.isModerator,
+        status: newUser.status,
+      }
+    );
+
+    return newUser;
   }
 
   /**
@@ -220,34 +239,87 @@ export class UsersService {
       }
     });
 
-    return this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id },
       data: dataToUpdate,
     });
+
+    // Detecta campos alterados para auditoria
+    const changedFields: string[] = [];
+    const oldValues: Record<string, any> = {};
+    const newValues: Record<string, any> = {};
+
+    Object.entries(updateUserDto).forEach(([key, value]) => {
+      if (value !== undefined && key !== 'password') {
+        const oldValue = currentUser[key as keyof UserEntity];
+        if (oldValue !== value) {
+          changedFields.push(key);
+          oldValues[key] = oldValue;
+          newValues[key] = value;
+        }
+      }
+    });
+
+    // Registra mudança de senha separadamente (sem expor valores)
+    if (updateUserDto.password) {
+      changedFields.push('password');
+      await this.auditLogService.logPasswordChanged(id, id);
+    }
+
+    // Registra mudança de email separadamente
+    if (updateUserDto.email && currentUser.email !== updateUserDto.email) {
+      await this.auditLogService.logEmailChanged(
+        id,
+        currentUser.email || '',
+        updateUserDto.email,
+        id
+      );
+    }
+
+    // Registra atualização geral
+    if (changedFields.length > 0) {
+      await this.auditLogService.logUserUpdated(
+        id,
+        id, // updatedBy (pode ser passado como parâmetro se necessário)
+        changedFields,
+        oldValues,
+        newValues
+      );
+    }
+
+    return updatedUser;
   }
 
   /**
    * Remove um usuário (soft delete alterando status para INACTIVE e marcando deletedAt)
    */
-  async remove(id: string): Promise<UserEntity> {
+  async remove(id: string, deletedBy?: string): Promise<UserEntity> {
     // Verifica se o usuário existe
     await this.findOne(id);
 
-    return this.prisma.user.update({
+    const deletedUser = await this.prisma.user.update({
       where: { id },
       data: {
         status: UserStatus.INACTIVE,
         deletedAt: new Date(),
       },
     });
+
+    // Registra soft delete no log de auditoria
+    await this.auditLogService.logUserDeleted(id, deletedBy || id);
+
+    return deletedUser;
   }
 
   /**
    * Remove um usuário permanentemente do banco de dados
    */
-  async hardDelete(id: string): Promise<void> {
+  async hardDelete(id: string, deletedBy?: string): Promise<void> {
     // Verifica se o usuário existe
-    await this.findOne(id);
+    const user = await this.findOne(id);
+
+    // Registra hard delete ANTES de deletar (pois depois não terá mais acesso aos dados)
+    await this.auditLogService.logUserHardDeleted(id, deletedBy || id);
 
     await this.prisma.user.delete({
       where: { id },
@@ -285,6 +357,12 @@ export class UsersService {
           status: UserStatus.SUSPENDED,
         },
       });
+      // Registra bloqueio de conta
+      await this.auditLogService.logAccountLocked(
+        user.id,
+        email,
+        `Máximo de ${MAX_ATTEMPTS} tentativas de login falhadas atingido`
+      );
     } else {
       // Incrementa contador de tentativas falhadas
       await this.prisma.user.update({
@@ -333,6 +411,10 @@ export class UsersService {
           status: UserStatus.ACTIVE,
         },
       });
+
+      // Registra desbloqueio automático
+      await this.auditLogService.logAccountUnlocked(user.id, email);
+
       return false;
     }
 
