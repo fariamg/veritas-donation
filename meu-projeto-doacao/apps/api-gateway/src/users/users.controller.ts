@@ -9,6 +9,8 @@ import {
   Query,
   Inject,
   UseInterceptors,
+  UseGuards,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 // ClientProxy: Classe do NestJS para enviar mensagens via RabbitMQ
@@ -28,6 +30,10 @@ import {
   IUser,
 } from '@shared';
 import { RpcToHttpExceptionInterceptor } from '../interceptors/rpc-to-http-exception.interceptor';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 /**
  * Users Controller - API Gateway
@@ -73,8 +79,11 @@ export class UsersController {
    * GET /api/users
    * Lista todos os usuários com paginação
    * Valida query params com FindAllUsersQueryDto
+   * Requer autenticação e role de admin ou moderador
    */
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'moderator')
   async findAll(@Query() query: FindAllUsersQueryDto): Promise<IUser[]> {
     return await firstValueFrom(
       this.userServiceClient
@@ -126,12 +135,23 @@ export class UsersController {
    * PATCH /api/users/:id
    * Atualiza um usuário
    * Valida dados com UpdateUserDto via ValidationPipe
+   * Usuários podem atualizar apenas seus próprios dados
+   * Admins podem atualizar qualquer usuário
    */
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   async update(
     @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto
+    @Body() updateUserDto: UpdateUserDto,
+    @CurrentUser() currentUser: any
   ): Promise<IUser> {
+    // Apenas admin pode atualizar outros usuários
+    if (id !== currentUser.userId && !currentUser.isAdmin) {
+      throw new UnauthorizedException(
+        'Você só pode atualizar seus próprios dados'
+      );
+    }
+
     return await firstValueFrom(
       this.userServiceClient
         .send(USER_MESSAGE_PATTERNS.UPDATE_USER, { id, ...updateUserDto })
@@ -142,8 +162,11 @@ export class UsersController {
   /**
    * DELETE /api/users/:id
    * Remove um usuário (soft delete)
+   * Apenas admins podem remover usuários
    */
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   async remove(@Param('id') id: string): Promise<IUser> {
     return await firstValueFrom(
       this.userServiceClient
@@ -155,8 +178,11 @@ export class UsersController {
   /**
    * DELETE /api/users/:id/hard
    * Remove permanentemente um usuário
+   * Apenas admins podem fazer hard delete
    */
   @Delete(':id/hard')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   async hardDelete(@Param('id') id: string): Promise<void> {
     await firstValueFrom(
       this.userServiceClient
